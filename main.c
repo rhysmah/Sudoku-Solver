@@ -1,9 +1,9 @@
 #include "sudoku.h"
 
-char POSSIBLE_VALUES = 0x1FF;
-int  BOX_SIZE        = 9;
-int  ROW_SIZE        = 9;
-int  COLUMN_SIZE     = 9;
+int  UNSOLVED    = 81;
+int  BOX_SIZE    = 9;
+int  ROW_SIZE    = 9;
+int  COLUMN_SIZE = 9;
 
 int main() {
 
@@ -12,9 +12,13 @@ int main() {
 
     sudokuPuzzle = createPuzzle();
 
-    printPuzzle(sudokuPuzzle);
-
     sudoku = setUpPuzzle(sudokuPuzzle);
+
+    printPuzzle(sudoku);
+
+    checkPuzzle(sudoku);
+
+    printPuzzle(sudoku);
 
     return 0;
 }

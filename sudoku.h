@@ -7,15 +7,17 @@
 #define SUDOKU_HORIZONTAL_SEPARATOR "-------------------------------\n"
 #define SUDOKU_VERTICAL_SEPARATOR   "|"
 
-extern char POSSIBLE_VALUES;
+extern int  UNSOLVED;
 extern int  BOX_SIZE;
 extern int  ROW_SIZE;
 extern int  COLUMN_SIZE;
 
-typedef struct Box
-{
-
-    struct Box * next;
+typedef struct Box {
+    int    numbersInBox;
+    int    solvable;
+    int    possibleValues[9];
+    struct SingleSquare ** squares;
+    struct Box * next; // Points to the next Box object
 } Box;
 
 // Represents a 1x1 Sudoku square that holds a single value.
@@ -35,12 +37,18 @@ typedef struct SingleSquare
 
 } SingleSquare;
 
+int checkPuzzle(SingleSquare *** puzzle);
+
 int ** createPuzzle();
 
-void printPuzzle(int ** puzzle);
+void printPuzzle(SingleSquare *** square);
 
 SingleSquare *** setUpPuzzle(int ** puzzle);
 
 int updateSudoku(SingleSquare *** sudoku, int row, int column);
+
+Box ** createBoxes();
+
+int updateBoxes(SingleSquare *** sudoku, int row, int column);
 
 #endif

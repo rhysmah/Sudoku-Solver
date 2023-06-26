@@ -5,12 +5,21 @@
 #include <stdio.h>
 
 #include "sudoku.h"
+#include "square.h"
 
-SingleSquare *** setUpPuzzle(int ** puzzle)
-{
+
+/*
+ * Creates an array of
+ */
+SingleSquare *** setUpPuzzle(int ** puzzle) {
+
     int i, j, k;
+    int currentBox = 0;
+    Box ** boxes;
     SingleSquare *** sudoku;
+
     sudoku = (SingleSquare ***) malloc(sizeof(SingleSquare**) * COLUMN_SIZE);
+    boxes  = createBoxes();
 
     // Loop through Sudoku rows
     for (i = 0; i < COLUMN_SIZE; ++i) {
@@ -20,17 +29,35 @@ SingleSquare *** setUpPuzzle(int ** puzzle)
         // Loop through Sudoku columns
         for (j = 0; j < ROW_SIZE; ++j) {
 
-            sudoku[i][j] = (SingleSquare *)malloc(sizeof(SingleSquare) * BOX_SIZE);
+            sudoku[i][j] = (SingleSquare *)malloc(sizeof(SingleSquare));
 
             // Assign Sudoku box value, row position, and column positions
-            sudoku[i][j] -> number = puzzle[i][j];
-            sudoku[i][j] -> row    = i;
-            sudoku[i][j] -> column = j;
+            sudoku[i][j] -> number   = puzzle[i][j]; // Integer value at this index position in 2D array
+            sudoku[i][j] -> row      = i;            // Row position of box
+            sudoku[i][j] -> column   = j;            // Column position of box
+            sudoku[i][j] -> solvable = 9;
+
+            boxes[currentBox] -> squares[ boxes[currentBox] -> numbersInBox] = sudoku[i][j];
+            sudoku[i][j] -> boxPosition = boxes[currentBox];
+            boxes[currentBox] -> numbersInBox++;
 
             // Initialize all values in "possibleValues" array to 0
             for (k = 0; k < BOX_SIZE; ++k) {
                 sudoku[i][j] -> possibleValues[k] = 0;
             }
+            if (j == 2) {
+                ++currentBox;
+            }
+            if (j == 5) {
+                ++currentBox;
+            }
+        }
+        currentBox -= 2;
+        if (i == 2) {
+            currentBox = 3;
+        }
+        if (i == 5) {
+            currentBox = 6;
         }
     }
 
@@ -47,18 +74,18 @@ SingleSquare *** setUpPuzzle(int ** puzzle)
             // If the value is NOT zero, then it is NOT solvable.
             if (sudoku[i][j] -> number != 0) {
                 sudoku[i][j] -> solvable = 0;
-
                 updateSudoku(sudoku, i, j);
+                updateBoxes(sudoku, i, j);
+                UNSOLVED--;
             }
         }
     }
-
     return sudoku;
 }
 
 int updateSudoku(SingleSquare *** sudoku, int row, int column) {
 
-    int i;
+    int i, j;
     int indexNumber = sudoku[row][column] -> number;
 
     // Loop through all rows
@@ -68,10 +95,33 @@ int updateSudoku(SingleSquare *** sudoku, int row, int column) {
         }
         sudoku[i][column] -> possibleValues[indexNumber - 1] = 1;
     }
+
+    for (j = 0; j < COLUMN_SIZE; ++j) {
+        if (sudoku[row][j] -> possibleValues[indexNumber - 1] == 0) {
+            sudoku[row][j] -> solvable--;
+        }
+        sudoku[row][j] -> possibleValues[indexNumber - 1] = 1;
+    }
+    return 1;
 }
 
-int ** createPuzzle()
-{
+int checkPuzzle(SingleSquare *** puzzle) {
+    int i, j;
+
+    for (i = 0; i < ROW_SIZE; ++i) {
+        for (j = 0; j < COLUMN_SIZE; ++j) {
+            if (puzzle[i][j] -> solvable == 1) {
+                solveSquare(puzzle[i][j]);
+                updateSudoku(puzzle, i, j);
+                updateBoxes(puzzle, i, j);
+            }
+        }
+    }
+    return 1;
+}
+
+int ** createPuzzle() {
+
     int ** puzzle; // Returns a double-pointer
     int i, j;      // Loop counters
 
@@ -96,25 +146,24 @@ int ** createPuzzle()
 
     /*
      * Loop through each integer pointer and dynamically allocate
-     * memory for a nine-element integer sudokuPuzzle.
+     * memory for a nine-element integer array. This array will
+     * represent one of nine 9x9 boxes in the Sudoku board.
      */
-    for (i = 0; i < 9; ++i)
-    {
+    for (i = 0; i < 9; ++i) {
         puzzle[i] = (int*)malloc(sizeof(int) * 9);
 
         /*
          * Loop through each integer in the integer sudokuPuzzle and assign it
-         * a value from the equivalent position in the "sudokuPuzzle" sudokuPuzzle.
+         * a value from the equivalent position in the "sudokuPuzzle" Sudoku.
          */
-        for (j = 0; j < 9; ++j)
-        {
+        for (j = 0; j < 9; ++j) {
             puzzle[i][j] = sudokuPuzzle[i][j];
         }
     }
     return puzzle;
 }
 
-void printPuzzle(int ** puzzle)
+void printPuzzle(SingleSquare *** square)
 {
     int i, j; // Loop counters
 
@@ -128,7 +177,7 @@ void printPuzzle(int ** puzzle)
         for (j = 0; j < 9; ++j)
         {
 
-            printf(" %d ", puzzle[i][j]);
+            printf(" %d ", square[i][j] -> number);
 
             // Separate each 3x3 with space
             if ((j + 1) % 3 == 0) {
